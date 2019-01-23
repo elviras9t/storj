@@ -20,6 +20,7 @@ import (
 	"storj.io/storj/pkg/pb"
 	"storj.io/storj/pkg/statdb"
 	"storj.io/storj/pkg/storj"
+	"storj.io/storj/pkg/uplinkdb"
 	"storj.io/storj/satellite"
 	"storj.io/storj/satellite/console"
 )
@@ -69,6 +70,13 @@ func (m *lockedAccounting) LastRawTime(ctx context.Context, timestampType string
 	return m.db.LastRawTime(ctx, timestampType)
 }
 
+// QueryPaymentInfo queries StatDB, Accounting Rollup on nodeID
+func (m *lockedAccounting) QueryPaymentInfo(ctx context.Context, start time.Time, end time.Time) ([]*accounting.CSVRow, error) {
+	m.Lock()
+	defer m.Unlock()
+	return m.db.QueryPaymentInfo(ctx, start, end)
+}
+
 // SaveAtRestRaw records raw tallies of at-rest-data.
 func (m *lockedAccounting) SaveAtRestRaw(ctx context.Context, latestTally time.Time, isNew bool, nodeData map[storj.NodeID]float64) error {
 	m.Lock()
@@ -88,6 +96,13 @@ func (m *lockedAccounting) SaveRollup(ctx context.Context, latestTally time.Time
 	m.Lock()
 	defer m.Unlock()
 	return m.db.SaveRollup(ctx, latestTally, stats)
+}
+
+// Adds records to rollup for testing (TODO: remove before merge)
+func (m *lockedAccounting) TestPayments(ctx context.Context) error {
+	m.Lock()
+	defer m.Unlock()
+	return m.db.TestPayments(ctx)
 }
 
 // BandwidthAgreement returns database for storing bandwidth agreements
@@ -212,24 +227,28 @@ type lockedBuckets struct {
 	db console.Buckets
 }
 
+// AttachBucket attaches a bucket to a project
 func (m *lockedBuckets) AttachBucket(ctx context.Context, name string, projectID uuid.UUID) (*console.Bucket, error) {
 	m.Lock()
 	defer m.Unlock()
 	return m.db.AttachBucket(ctx, name, projectID)
 }
 
+// DeattachBucket deletes bucket info for a bucket by name
 func (m *lockedBuckets) DeattachBucket(ctx context.Context, name string) error {
 	m.Lock()
 	defer m.Unlock()
 	return m.db.DeattachBucket(ctx, name)
 }
 
+// GetBucket retrieves bucket info of bucket with given name
 func (m *lockedBuckets) GetBucket(ctx context.Context, name string) (*console.Bucket, error) {
 	m.Lock()
 	defer m.Unlock()
 	return m.db.GetBucket(ctx, name)
 }
 
+// ListBuckets returns bucket list of a given project
 func (m *lockedBuckets) ListBuckets(ctx context.Context, projectID uuid.UUID) ([]console.Bucket, error) {
 	m.Lock()
 	defer m.Unlock()
@@ -476,6 +495,13 @@ func (m *lockedOverlayCache) GetAll(ctx context.Context, nodeIDs storj.NodeIDLis
 	return m.db.GetAll(ctx, nodeIDs)
 }
 
+// GetWalletAddress gets the node's wallet address
+func (m *lockedOverlayCache) GetWalletAddress(ctx context.Context, id storj.NodeID) (string, error) {
+	m.Lock()
+	defer m.Unlock()
+	return m.db.GetWalletAddress(ctx, id)
+}
+
 // List lists nodes starting from cursor
 func (m *lockedOverlayCache) List(ctx context.Context, cursor storj.NodeID, limit int) ([]*pb.Node, error) {
 	m.Lock()
@@ -488,13 +514,6 @@ func (m *lockedOverlayCache) Update(ctx context.Context, value *pb.Node) error {
 	m.Lock()
 	defer m.Unlock()
 	return m.db.Update(ctx, value)
-}
-
-//GetWalletAddress gets the node's wallet address
-func (m *lockedOverlayCache) GetWalletAddress(ctx context.Context, id storj.NodeID) (string, error) {
-	m.Lock()
-	defer m.Unlock()
-	return m.db.GetWalletAddress(ctx, id)
 }
 
 // RepairQueue returns queue for segments that need repairing
@@ -598,4 +617,45 @@ func (m *lockedStatDB) UpdateUptime(ctx context.Context, nodeID storj.NodeID, is
 	m.Lock()
 	defer m.Unlock()
 	return m.db.UpdateUptime(ctx, nodeID, isUp)
+}
+
+// UplinkDB returns database for storing bandwidth agreements
+func (m *locked) UplinkDB() uplinkdb.DB {
+	m.Lock()
+	defer m.Unlock()
+	return &lockedUplinkDB{m.Locker, m.db.UplinkDB()}
+}
+
+// lockedUplinkDB implements locking wrapper for uplinkdb.DB
+type lockedUplinkDB struct {
+	sync.Locker
+	db uplinkdb.DB
+}
+
+// CreateAgreement adds a new bandwidth agreement.
+func (m *lockedUplinkDB) CreateAgreement(ctx context.Context, a1 string, a2 uplinkdb.Agreement) error {
+	m.Lock()
+	defer m.Unlock()
+	return m.db.CreateAgreement(ctx, a1, a2)
+}
+
+// GetAgreements gets all bandwidth agreements.
+func (m *lockedUplinkDB) GetAgreements(ctx context.Context) ([]uplinkdb.Agreement, error) {
+	m.Lock()
+	defer m.Unlock()
+	return m.db.GetAgreements(ctx)
+}
+
+// GetAgreementsSince gets all bandwidth agreements since specific time.
+func (m *lockedUplinkDB) GetAgreementsSince(ctx context.Context, a1 time.Time) ([]uplinkdb.Agreement, error) {
+	m.Lock()
+	defer m.Unlock()
+	return m.db.GetAgreementsSince(ctx, a1)
+}
+
+// GetSignature gets the public key of uplink corresponding to serial number
+func (m *lockedUplinkDB) GetSignature(ctx context.Context, serialnum string) (*uplinkdb.Agreement, error) {
+	m.Lock()
+	defer m.Unlock()
+	return m.db.GetSignature(ctx, serialnum)
 }

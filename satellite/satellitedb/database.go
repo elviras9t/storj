@@ -13,6 +13,7 @@ import (
 	"storj.io/storj/pkg/datarepair/queue"
 	"storj.io/storj/pkg/overlay"
 	"storj.io/storj/pkg/statdb"
+	"storj.io/storj/pkg/uplinkdb"
 	"storj.io/storj/pkg/utils"
 	"storj.io/storj/satellite"
 	"storj.io/storj/satellite/console"
@@ -59,6 +60,11 @@ func NewInMemory() (satellite.DB, error) {
 // BandwidthAgreement is a getter for bandwidth agreement repository
 func (db *DB) BandwidthAgreement() bwagreement.DB {
 	return &bandwidthagreement{db: db.db}
+}
+
+// UplinkDB is a getter for uplink's specific info like public key, id, etc...
+func (db *DB) UplinkDB() uplinkdb.DB {
+	return &uplinkDB{db: db.db}
 }
 
 // // PointerDB is a getter for PointerDB repository

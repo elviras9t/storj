@@ -4,6 +4,7 @@
 package test
 
 import (
+	"context"
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/x509"
@@ -17,10 +18,11 @@ import (
 	"storj.io/storj/internal/teststorj"
 	"storj.io/storj/pkg/pb"
 	"storj.io/storj/pkg/storj"
+	"storj.io/storj/pkg/uplinkdb"
 )
 
 //GeneratePayerBandwidthAllocation creates a signed PayerBandwidthAllocation from a PayerBandwidthAllocation_Action
-func GeneratePayerBandwidthAllocation(action pb.PayerBandwidthAllocation_Action, satelliteKey crypto.PrivateKey, uplinkKey crypto.PrivateKey, expiration time.Duration) (*pb.PayerBandwidthAllocation, error) {
+func GeneratePayerBandwidthAllocation(ctx context.Context, upldb uplinkdb.DB, action pb.PayerBandwidthAllocation_Action, satelliteKey crypto.PrivateKey, uplinkKey crypto.PrivateKey, expiration time.Duration) (*pb.PayerBandwidthAllocation, error) {
 	satelliteKeyEcdsa, ok := satelliteKey.(*ecdsa.PrivateKey)
 	if !ok {
 		return nil, errs.New("Satellite Private Key is not a valid *ecdsa.PrivateKey")
@@ -36,16 +38,23 @@ func GeneratePayerBandwidthAllocation(action pb.PayerBandwidthAllocation_Action,
 		return nil, err
 	}
 
+	uplinkID := teststorj.NodeIDFromString("UplinkID")
+
+	// store the corresponding uplink's id and public key into uplinkDB db
+	err = upldb.CreateAgreement(ctx, serialNum.String(), uplinkdb.Agreement{Agreement: uplinkID.Bytes(), Signature: pubbytes})
+	if err != nil {
+		return nil, err
+	}
+
 	// Generate PayerBandwidthAllocation_Data
 	data, _ := proto.Marshal(
 		&pb.PayerBandwidthAllocation_Data{
 			SatelliteId:       teststorj.NodeIDFromString("SatelliteID"),
-			UplinkId:          teststorj.NodeIDFromString("UplinkID"),
+			UplinkId:          uplinkID,
 			ExpirationUnixSec: time.Now().Add(expiration).Unix(),
 			SerialNumber:      serialNum.String(),
 			Action:            action,
 			CreatedUnixSec:    time.Now().Unix(),
-			PubKey:            pubbytes,
 		},
 	)
 

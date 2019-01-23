@@ -16,19 +16,22 @@ import (
 	"storj.io/storj/pkg/identity"
 	"storj.io/storj/pkg/pb"
 	"storj.io/storj/pkg/peertls"
+	"storj.io/storj/pkg/uplinkdb"
 )
 
 // AllocationSigner structure
 type AllocationSigner struct {
 	satelliteIdentity *identity.FullIdentity
 	bwExpiration      int
+	uplinkdb          uplinkdb.DB
 }
 
 // NewAllocationSigner creates new instance
-func NewAllocationSigner(satelliteIdentity *identity.FullIdentity, bwExpiration int) *AllocationSigner {
+func NewAllocationSigner(satelliteIdentity *identity.FullIdentity, bwExpiration int, upldb uplinkdb.DB) *AllocationSigner {
 	return &AllocationSigner{
 		satelliteIdentity: satelliteIdentity,
 		bwExpiration:      bwExpiration,
+		uplinkdb:          upldb,
 	}
 }
 
@@ -48,16 +51,22 @@ func (allocation *AllocationSigner) PayerBandwidthAllocation(ctx context.Context
 		return nil, err
 	}
 
-	serialNum, err := uuid.New()
-	if err != nil {
-		return nil, err
-	}
-
 	created := time.Now().Unix()
 
 	// convert ttl from days to seconds
 	ttl := allocation.bwExpiration
 	ttl *= 86400
+
+	serialNum, err := uuid.New()
+	if err != nil {
+		return nil, err
+	}
+
+	// store the corresponding uplink's id and public key into uplinkDB db
+	err = allocation.uplinkdb.CreateAgreement(ctx, serialNum.String(), uplinkdb.Agreement{Agreement: peerIdentity.ID.Bytes(), Signature: pubbytes})
+	if err != nil {
+		return nil, err
+	}
 
 	pbad := &pb.PayerBandwidthAllocation_Data{
 		SatelliteId:       allocation.satelliteIdentity.ID,

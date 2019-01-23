@@ -18,6 +18,7 @@ import (
 
 	"storj.io/storj/pkg/pb"
 	"storj.io/storj/pkg/peertls"
+	"storj.io/storj/pkg/uplinkdb"
 )
 
 var (
@@ -43,9 +44,10 @@ type DB interface {
 
 // Server is an implementation of the pb.BandwidthServer interface
 type Server struct {
-	db     DB
-	pkey   crypto.PublicKey
-	logger *zap.Logger
+	db       DB
+	uplinkdb uplinkdb.DB
+	pkey     crypto.PublicKey
+	logger   *zap.Logger
 }
 
 // Agreement is a struct that contains a bandwidth agreement and the associated signature
@@ -57,12 +59,13 @@ type Agreement struct {
 }
 
 // NewServer creates instance of Server
-func NewServer(db DB, logger *zap.Logger, pkey crypto.PublicKey) *Server {
+func NewServer(db DB,  upldb uplinkdb.DB, logger *zap.Logger, pkey crypto.PublicKey) *Server {
 	// TODO: reorder arguments, rename logger -> log
 	return &Server{
-		db:     db,
-		logger: logger,
-		pkey:   pkey,
+		db:       db,
+		uplinkdb: upldb,
+		logger:   logger,
+		pkey:     pkey,
 	}
 }
 
@@ -146,8 +149,14 @@ func (s *Server) verifySignature(ctx context.Context, ba *pb.RenterBandwidthAllo
 	if err := proto.Unmarshal(pba.GetData(), pbad); err != nil {
 		return Error.New("Failed to unmarshal PayerBandwidthAllocation: %+v", err)
 	}
-	// Extract renter's public key from PayerBandwidthAllocation_Data
-	pubkey, err := x509.ParsePKIXPublicKey(pbad.GetPubKey())
+
+	// Get renter's public key from uplink agreement db
+	uplinkInfo, err := s.uplinkdb.GetSignature(ctx, pbad.GetSerialNumber())
+	if err != nil {
+		return BwAgreementError.New("Failed to unmarshal PayerBandwidthAllocation: %+v", err)
+	}
+
+	pubkey, err := x509.ParsePKIXPublicKey(uplinkInfo.Signature)
 	if err != nil {
 		return Error.New("Failed to extract Public Key from RenterBandwidthAllocation: %+v", err)
 	}

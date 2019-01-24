@@ -59,7 +59,7 @@ type Agreement struct {
 }
 
 // NewServer creates instance of Server
-func NewServer(db DB,  upldb uplinkdb.DB, logger *zap.Logger, pkey crypto.PublicKey) *Server {
+func NewServer(db DB, upldb uplinkdb.DB, logger *zap.Logger, pkey crypto.PublicKey) *Server {
 	// TODO: reorder arguments, rename logger -> log
 	return &Server{
 		db:       db,
@@ -153,7 +153,7 @@ func (s *Server) verifySignature(ctx context.Context, ba *pb.RenterBandwidthAllo
 	// Get renter's public key from uplink agreement db
 	uplinkInfo, err := s.uplinkdb.GetSignature(ctx, pbad.GetSerialNumber())
 	if err != nil {
-		return BwAgreementError.New("Failed to unmarshal PayerBandwidthAllocation: %+v", err)
+		return Error.New("Failed to unmarshal PayerBandwidthAllocation: %+v", err)
 	}
 
 	pubkey, err := x509.ParsePKIXPublicKey(uplinkInfo.Signature)

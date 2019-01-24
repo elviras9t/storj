@@ -98,13 +98,6 @@ func (m *lockedAccounting) SaveRollup(ctx context.Context, latestTally time.Time
 	return m.db.SaveRollup(ctx, latestTally, stats)
 }
 
-// Adds records to rollup for testing (TODO: remove before merge)
-func (m *lockedAccounting) TestPayments(ctx context.Context) error {
-	m.Lock()
-	defer m.Unlock()
-	return m.db.TestPayments(ctx)
-}
-
 // BandwidthAgreement returns database for storing bandwidth agreements
 func (m *locked) BandwidthAgreement() bwagreement.DB {
 	m.Lock()
@@ -365,13 +358,6 @@ func (m *lockedProjects) Update(ctx context.Context, project *console.Project) e
 	return m.db.Update(ctx, project)
 }
 
-// QueryPaymentInfo queries StatDB, Accounting Rollup on nodeID
-func (m *lockedAccounting) QueryPaymentInfo(ctx context.Context, start time.Time, end time.Time) ([]*accounting.CSVRow, error) {
-	m.Lock()
-	defer m.Unlock()
-	return m.db.QueryPaymentInfo(ctx, start, end)
-}
-
 // Users is a getter for Users repository
 func (m *lockedConsole) Users() console.Users {
 	m.Lock()
@@ -619,7 +605,7 @@ func (m *lockedStatDB) UpdateUptime(ctx context.Context, nodeID storj.NodeID, is
 	return m.db.UpdateUptime(ctx, nodeID, isUp)
 }
 
-// UplinkDB returns database for storing bandwidth agreements
+// UplinkDB returns database for storing uplink's public key & ID
 func (m *locked) UplinkDB() uplinkdb.DB {
 	m.Lock()
 	defer m.Unlock()

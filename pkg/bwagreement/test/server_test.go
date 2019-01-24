@@ -28,16 +28,16 @@ func TestBandwidthAgreement(t *testing.T) {
 		ctx := testcontext.New(t)
 		defer ctx.Cleanup()
 
-		testDatabase(ctx, t, db.BandwidthAgreement())
+		testDatabase(ctx, t, db)
 	})
 }
 
-func testDatabase(ctx context.Context, t *testing.T, bwdb bwagreement.DB) {
+func testDatabase(ctx context.Context, t *testing.T, db satellite.DB) {
 	satellitePubKey, satellitePrivKey, uplinkPrivKey := generateKeys(ctx, t)
-	satellite := bwagreement.NewServer(bwdb, zap.NewNop(), satellitePubKey)
+	satellite := bwagreement.NewServer(db.BandwidthAgreement(), db.UplinkDB(), zap.NewNop(), satellitePubKey)
 
 	{ // TestSameSerialNumberBandwidthAgreements
-		pbaFile1, err := GeneratePayerBandwidthAllocation(pb.PayerBandwidthAllocation_GET, satellitePrivKey, uplinkPrivKey, time.Hour)
+		pbaFile1, err := GeneratePayerBandwidthAllocation(ctx, db.UplinkDB(), pb.PayerBandwidthAllocation_GET, satellitePrivKey, uplinkPrivKey, time.Hour)
 		assert.NoError(t, err)
 
 		rbaNode1, err := GenerateRenterBandwidthAllocation(pbaFile1, teststorj.NodeIDFromString("Storage node 1"), uplinkPrivKey)
@@ -63,7 +63,7 @@ func testDatabase(ctx context.Context, t *testing.T, bwdb bwagreement.DB) {
 		/* Storage node can submit a second bwagreement with a different sequence value.
 		   Uplink downloads another file. New PayerBandwidthAllocation with a new sequence. */
 		{
-			pbaFile2, err := GeneratePayerBandwidthAllocation(pb.PayerBandwidthAllocation_GET, satellitePrivKey, uplinkPrivKey, time.Hour)
+			pbaFile2, err := GeneratePayerBandwidthAllocation(ctx, db.UplinkDB(), pb.PayerBandwidthAllocation_GET, satellitePrivKey, uplinkPrivKey, time.Hour)
 			assert.NoError(t, err)
 
 			rbaNode1, err := GenerateRenterBandwidthAllocation(pbaFile2, teststorj.NodeIDFromString("Storage node 1"), uplinkPrivKey)
@@ -96,7 +96,7 @@ func testDatabase(ctx context.Context, t *testing.T, bwdb bwagreement.DB) {
 
 	{ // TestExpiredBandwidthAgreements
 		{ // storage nodes can submit a bwagreement that will expire in one second
-			pba, err := GeneratePayerBandwidthAllocation(pb.PayerBandwidthAllocation_GET, satellitePrivKey, uplinkPrivKey, time.Second)
+			pba, err := GeneratePayerBandwidthAllocation(ctx, db.UplinkDB(), pb.PayerBandwidthAllocation_GET, satellitePrivKey, uplinkPrivKey, time.Second)
 			assert.NoError(t, err)
 
 			rba, err := GenerateRenterBandwidthAllocation(pba, teststorj.NodeIDFromString("Storage node 1"), uplinkPrivKey)
@@ -108,7 +108,7 @@ func testDatabase(ctx context.Context, t *testing.T, bwdb bwagreement.DB) {
 		}
 
 		{ // storage nodes can't submit a bwagreement that expires right now
-			pba, err := GeneratePayerBandwidthAllocation(pb.PayerBandwidthAllocation_GET, satellitePrivKey, uplinkPrivKey, 0*time.Second)
+			pba, err := GeneratePayerBandwidthAllocation(ctx, db.UplinkDB(), pb.PayerBandwidthAllocation_GET, satellitePrivKey, uplinkPrivKey, 0*time.Second)
 			assert.NoError(t, err)
 
 			rba, err := GenerateRenterBandwidthAllocation(pba, teststorj.NodeIDFromString("Storage node 1"), uplinkPrivKey)
@@ -120,7 +120,7 @@ func testDatabase(ctx context.Context, t *testing.T, bwdb bwagreement.DB) {
 		}
 
 		{ // storage nodes can't submit a bwagreement that expires yesterday
-			pba, err := GeneratePayerBandwidthAllocation(pb.PayerBandwidthAllocation_GET, satellitePrivKey, uplinkPrivKey, -23*time.Hour-55*time.Second)
+			pba, err := GeneratePayerBandwidthAllocation(ctx, db.UplinkDB(), pb.PayerBandwidthAllocation_GET, satellitePrivKey, uplinkPrivKey, -23*time.Hour-55*time.Second)
 			assert.NoError(t, err)
 
 			rba, err := GenerateRenterBandwidthAllocation(pba, teststorj.NodeIDFromString("Storage node 1"), uplinkPrivKey)
@@ -133,7 +133,7 @@ func testDatabase(ctx context.Context, t *testing.T, bwdb bwagreement.DB) {
 	}
 
 	{ // TestManipulatedBandwidthAgreements
-		pba, err := GeneratePayerBandwidthAllocation(pb.PayerBandwidthAllocation_GET, satellitePrivKey, uplinkPrivKey, time.Hour)
+		pba, err := GeneratePayerBandwidthAllocation(ctx, db.UplinkDB(), pb.PayerBandwidthAllocation_GET, satellitePrivKey, uplinkPrivKey, time.Hour)
 		assert.NoError(t, err)
 
 		rba, err := GenerateRenterBandwidthAllocation(pba, teststorj.NodeIDFromString("Storage node 1"), uplinkPrivKey)
@@ -215,7 +215,7 @@ func testDatabase(ctx context.Context, t *testing.T, bwdb bwagreement.DB) {
 				Data:      maniprba,
 			})
 
-			assert.EqualError(t, err, "bwagreement error: Failed to verify Payer's Signature")
+			assert.EqualError(t, err, "bwagreement error: Failed to verify Renter's Signature")
 			assert.Equal(t, pb.AgreementsSummary_REJECTED, reply.Status)
 		}
 
@@ -248,13 +248,13 @@ func testDatabase(ctx context.Context, t *testing.T, bwdb bwagreement.DB) {
 				Data:      maniprba,
 			})
 
-			assert.EqualError(t, err, "bwagreement error: Failed to verify Payer's Signature")
+			assert.EqualError(t, err, "bwagreement error: Failed to verify Renter's Signature")
 			assert.Equal(t, pb.AgreementsSummary_REJECTED, reply.Status)
 		}
 	}
 
 	{ //TestInvalidBandwidthAgreements
-		pba, err := GeneratePayerBandwidthAllocation(pb.PayerBandwidthAllocation_GET, satellitePrivKey, uplinkPrivKey, time.Hour)
+		pba, err := GeneratePayerBandwidthAllocation(ctx, db.UplinkDB(), pb.PayerBandwidthAllocation_GET, satellitePrivKey, uplinkPrivKey, time.Hour)
 		assert.NoError(t, err)
 
 		{ // Storage node sends an corrupted signuature to force a satellite crash
@@ -280,7 +280,8 @@ func testDatabase(ctx context.Context, t *testing.T, bwdb bwagreement.DB) {
 			err = proto.Unmarshal(pba.GetData(), pbaData)
 			assert.NoError(t, err)
 
-			pbaData.PubKey = nil
+			// we dont use pubkey field as it will
+			pbaData.PubKey = []byte("aminvalidpubkey")
 
 			invalidpba, err := proto.Marshal(pbaData)
 			assert.NoError(t, err)
@@ -297,7 +298,7 @@ func testDatabase(ctx context.Context, t *testing.T, bwdb bwagreement.DB) {
 				Signature: rba.GetSignature(),
 				Data:      invalidrba,
 			})
-			assert.EqualError(t, err, "bwagreement error: Failed to extract Public Key from RenterBandwidthAllocation: asn1: syntax error: sequence truncated")
+			assert.EqualError(t, err, "bwagreement error: Failed to verify Renter's Signature")
 			assert.Equal(t, pb.AgreementsSummary_REJECTED, reply.Status)
 		}
 	}

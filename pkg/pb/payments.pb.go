@@ -37,7 +37,7 @@ func (m *PaymentRequest) Reset()         { *m = PaymentRequest{} }
 func (m *PaymentRequest) String() string { return proto.CompactTextString(m) }
 func (*PaymentRequest) ProtoMessage()    {}
 func (*PaymentRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_payments_f4730bcfc665723c, []int{0}
+	return fileDescriptor_payments_cb62371c1cbb6540, []int{0}
 }
 func (m *PaymentRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PaymentRequest.Unmarshal(m, b)
@@ -75,7 +75,7 @@ func (m *PaymentResponse) Reset()         { *m = PaymentResponse{} }
 func (m *PaymentResponse) String() string { return proto.CompactTextString(m) }
 func (*PaymentResponse) ProtoMessage()    {}
 func (*PaymentResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_payments_f4730bcfc665723c, []int{1}
+	return fileDescriptor_payments_cb62371c1cbb6540, []int{1}
 }
 func (m *PaymentResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PaymentResponse.Unmarshal(m, b)
@@ -108,7 +108,7 @@ func (m *CalculateRequest) Reset()         { *m = CalculateRequest{} }
 func (m *CalculateRequest) String() string { return proto.CompactTextString(m) }
 func (*CalculateRequest) ProtoMessage()    {}
 func (*CalculateRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_payments_f4730bcfc665723c, []int{2}
+	return fileDescriptor_payments_cb62371c1cbb6540, []int{2}
 }
 func (m *CalculateRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CalculateRequest.Unmarshal(m, b)
@@ -150,7 +150,7 @@ func (m *CalculateResponse) Reset()         { *m = CalculateResponse{} }
 func (m *CalculateResponse) String() string { return proto.CompactTextString(m) }
 func (*CalculateResponse) ProtoMessage()    {}
 func (*CalculateResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_payments_f4730bcfc665723c, []int{3}
+	return fileDescriptor_payments_cb62371c1cbb6540, []int{3}
 }
 func (m *CalculateResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CalculateResponse.Unmarshal(m, b)
@@ -199,7 +199,7 @@ func (m *AdjustPricesRequest) Reset()         { *m = AdjustPricesRequest{} }
 func (m *AdjustPricesRequest) String() string { return proto.CompactTextString(m) }
 func (*AdjustPricesRequest) ProtoMessage()    {}
 func (*AdjustPricesRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_payments_f4730bcfc665723c, []int{4}
+	return fileDescriptor_payments_cb62371c1cbb6540, []int{4}
 }
 func (m *AdjustPricesRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AdjustPricesRequest.Unmarshal(m, b)
@@ -244,7 +244,7 @@ func (m *AdjustPricesResponse) Reset()         { *m = AdjustPricesResponse{} }
 func (m *AdjustPricesResponse) String() string { return proto.CompactTextString(m) }
 func (*AdjustPricesResponse) ProtoMessage()    {}
 func (*AdjustPricesResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_payments_f4730bcfc665723c, []int{5}
+	return fileDescriptor_payments_cb62371c1cbb6540, []int{5}
 }
 func (m *AdjustPricesResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AdjustPricesResponse.Unmarshal(m, b)
@@ -266,8 +266,8 @@ var xxx_messageInfo_AdjustPricesResponse proto.InternalMessageInfo
 
 // The request message for querying the data needed to generate a payments CSV
 type GenerateCSVRequest struct {
-	StartTime            *timestamp.Timestamp `protobuf:"bytes,1,opt,name=start_time,json=startTime" json:"start_time,omitempty"`
-	EndTime              *timestamp.Timestamp `protobuf:"bytes,2,opt,name=end_time,json=endTime" json:"end_time,omitempty"`
+	StartTime            *timestamp.Timestamp `protobuf:"bytes,1,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
+	EndTime              *timestamp.Timestamp `protobuf:"bytes,2,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
 	XXX_unrecognized     []byte               `json:"-"`
 	XXX_sizecache        int32                `json:"-"`
@@ -277,7 +277,7 @@ func (m *GenerateCSVRequest) Reset()         { *m = GenerateCSVRequest{} }
 func (m *GenerateCSVRequest) String() string { return proto.CompactTextString(m) }
 func (*GenerateCSVRequest) ProtoMessage()    {}
 func (*GenerateCSVRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_payments_f4730bcfc665723c, []int{6}
+	return fileDescriptor_payments_cb62371c1cbb6540, []int{6}
 }
 func (m *GenerateCSVRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GenerateCSVRequest.Unmarshal(m, b)
@@ -323,7 +323,7 @@ func (m *GenerateCSVResponse) Reset()         { *m = GenerateCSVResponse{} }
 func (m *GenerateCSVResponse) String() string { return proto.CompactTextString(m) }
 func (*GenerateCSVResponse) ProtoMessage()    {}
 func (*GenerateCSVResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_payments_f4730bcfc665723c, []int{7}
+	return fileDescriptor_payments_cb62371c1cbb6540, []int{7}
 }
 func (m *GenerateCSVResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GenerateCSVResponse.Unmarshal(m, b)
@@ -540,9 +540,9 @@ var _Payments_serviceDesc = grpc.ServiceDesc{
 	Metadata: "payments.proto",
 }
 
-func init() { proto.RegisterFile("payments.proto", fileDescriptor_payments_f4730bcfc665723c) }
+func init() { proto.RegisterFile("payments.proto", fileDescriptor_payments_cb62371c1cbb6540) }
 
-var fileDescriptor_payments_f4730bcfc665723c = []byte{
+var fileDescriptor_payments_cb62371c1cbb6540 = []byte{
 	// 376 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x91, 0xcd, 0x4a, 0xfb, 0x40,
 	0x14, 0xc5, 0x49, 0xfb, 0xff, 0xb7, 0xcd, 0xad, 0xf4, 0x63, 0x1a, 0xb5, 0x04, 0xc1, 0x92, 0x55,
